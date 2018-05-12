@@ -126,6 +126,7 @@ class App extends Component {
 	  .attr("stroke-linecap", "round")
 	  .attr("d", line);
 	  return svg.node(); 
+
 	}
 
 	handleAgencyChange(event){
@@ -139,7 +140,6 @@ class App extends Component {
 	}
 
 	handleSubmit(event){
-		alert("event "+event.target.value);
 		const svg = d3.select("#svg");
 		svg.selectAll("*").remove();
 		this.fetchBuses(this.state.agency, this.state.route);
@@ -190,18 +190,19 @@ class App extends Component {
 		return (<center>
 			<form className="row" onSubmit={this.handleSubmit}>
 	      <label className="col">
-	        Agencia:
-	        <br/><select type="text" value={this.state.agency} onChange={this.handleAgencyChange}>
+	        <h3>Agencia:</h3>
+	        <select className="form-control" type="text" value={this.state.agency} onChange={this.handleAgencyChange}>
 	        {this.getAgenciasTags()}
 	        </select>
 	      </label>
-	      <span className="col-3"/>
+	      <span className="col-3">					</span>
 	      <label className="col">
-	        Ruta:
-	        <br/><select type="text" value={this.state.route} onChange={this.handleRouteChange}>
+	        <h3>Ruta:</h3>
+	        <select className="form-control" type="text" value={this.state.route} onChange={this.handleRouteChange}>
 	        {this.getRutasParaAgencia(this.state.agency)}
 	        </select>
 	      </label>
+	      <span className="col-3">					</span>
 	      <button className="col" type="submit" value="Grafica!">Grafica!</button>
 	    </form>
     </center>);
@@ -220,7 +221,6 @@ class App extends Component {
 					<div className="row">
 					{
 						ruta.comments.map((c)=>{
-							console.log("comentario",c);
 							return (<Comentario creador={c.creador} opinion={c.opinion}/>);
 						})						
 					}
@@ -239,10 +239,9 @@ class App extends Component {
 		return (
 			<div>
 				<AccountsUIWrapper />
-				<h1>horarios de buses por ruta y agencia</h1>
+				<h1><b>Nextbus:</b> horarios de buses por ruta y agencia</h1>
 				{this.renderFormulario()}
 				<div>
-					<h3>Al hacer click, se grafican horarios de buses para agencia "{this.state.agency}" y ruta con tag "{this.state.route}" </h3>
 					<h4>Tambien puedes escoger tu horario preferido</h4>
 					<center>
 						<button value="manana" onClick={this.handleHorarioButton}>Mañana</button>
@@ -251,6 +250,7 @@ class App extends Component {
 						<span>				</span>
 						<button value="todos" onClick={this.handleHorarioButton}>Todos</button>
 					</center>
+					<h3>Al hacer click, se grafican horarios de buses para agencia "{this.state.agency}" y ruta con tag "{this.state.route}" </h3>
 					{this.renderBuses()}
 				</div>
 				<svg 

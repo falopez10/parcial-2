@@ -1,5 +1,5 @@
 /* CSS declarations go here */
-h1, h4, h5, p, input {
+h1, h3, h4, h5, p, input {
 	
 	text-align: center;
 }
@@ -62,13 +62,10 @@ path:hover{
 	stroke-width:5; 
 }
 
-/*
-.login-link-text:after{
-	visibility: visible;
-	position: absolute;
-	display: inline;
-	top: 0;
-	left: 0;
-	text-align: center;
-	content: "Ingresar";
-} */
+svg > g > g.tick {
+	font-size: 20px;
+	max-width: 100px;
+}
+svg > g > g.tick > text {
+	font-size: 20px;
+}
