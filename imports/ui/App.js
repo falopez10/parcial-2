@@ -2,28 +2,55 @@ import React, { Component } from 'react';
 import { Meteor } from 'meteor/meteor';
 import * as d3 from "d3";
 import TimeButton from "./TimeButton.js";
+import { withTracker } from 'meteor/react-meteor-data';
 
-export default class App extends Component {
+import AccountsUIWrapper from "./AccountsUIWrapper.js";
+import Comentario from "./Comentario.js";
+
+import { Timetables } from "../api/methods.js";
+
+
+class App extends Component {
 	constructor(props){
 		super(props);
 		this.svg = React.createRef();
 
 		this.state={
-			selectedRoute:{}
+			selectedRoute:{},
+			agency:"sf-muni",
+			route:"N",
+			listRoutes:[]
 		}
+
+
+		this.handleSubmit = this.handleSubmit.bind(this);
+		this.handleAgencyChange = this.handleAgencyChange.bind(this);
+		this.handleRouteChange = this.handleRouteChange.bind(this);
+		this.handleKeyPress = this.handleKeyPress.bind(this);
 	}
 
 	componentDidMount() {
-		Meteor.call("buses.get", (err, res)=>{
-			if(err) "hay un err";
-			console.log(res);
+		// Al principio me muestras las de la ruta N de San Francisco
+
+		this.fetchBuses(this.state.agency,this.state.route);
+		
+	}
+
+	fetchBuses(agency, route){
+		Meteor.call("buses.get", agency, route, (err, res)=>{
+			if(err) {
+				alert(err);
+				return;
+			}
+			// console.log("RES" + res);
 			let selectedRoute= res.route[0];
 			this.setState({
-				selectedRoute
+				selectedRoute,
+				// listRoutes:[{tag:"N",title:"N"}]
+				// listRoutes:this.fetchRutasParaAgencia(agency)
 			});
 
 		});
-		
 	}
 
 	renderBuses(){
@@ -36,90 +63,188 @@ export default class App extends Component {
 			route.forEach((d) => d.date = new Date(+d.epochTime));    
 			buses.push(route);
 		});
-
-		// console.log("buses",buses);
-
-		// Estoy haciendo el map para un solo bus
-		// return buses[1].map((busStop)=>{
-		// 	return (<div key={busStop.tag}>{busStop.tag}</div>);
-		// });
 		this.dibujar(buses);
 
 	}
 
 	dibujar(buses){
+
+
 		const selectedRoute = this.state.selectedRoute;
 		const svg = d3.select("#svg");
+		svg.selectAll("*").remove();
 		const margin = ({top: 20, right: 30, bottom: 30, left: 150});
 		const height = svg.attr("height") - margin.top - margin.bottom;
 		const width = svg.attr("width") - margin.left - margin.right;
 
 		const minDate = d3.min(buses[1], d => d.date);
-  const maxDate = new Date(minDate.getTime() + 22*60*60*1000); // minDate + 24 hours
+	  const maxDate = new Date(minDate.getTime() + 22*60*60*1000); // minDate + 24 hours
 
-  const x = d3.scaleTime()
-  .domain([ minDate, maxDate ])
-  .range([margin.left, width - margin.right]);
-  const y = d3.scaleBand()
-  .domain(d3.range(buses[1].length))
-  .rangeRound([height - margin.bottom, margin.top]);
-  
-  const xAxis = g => g
-  .attr("transform", `translate(0,${height - margin.bottom})`)
-  .call(d3.axisBottom(x))
-  // .call(g => g.select(".domain").remove());
-  const yAxis = g => g
-  .attr("transform", `translate(${margin.left},0)`)
-  .call(d3.axisLeft(y)
-  	.tickFormat((d) => selectedRoute.header.stop[d].content));  
+	  const x = d3.scaleTime()
+	  .domain([ minDate, maxDate ])
+	  .range([margin.left, width - margin.right]);
+	  const y = d3.scaleBand()
+	  .domain(d3.range(buses[1].length))
+	  .rangeRound([height - margin.bottom, margin.top]);
+	  
+	  const xAxis = g => g
+	  .attr("transform", `translate(0,${height - margin.bottom})`)
+	  .call(d3.axisBottom(x))
+	  // .call(g => g.select(".domain").remove());
+	  const yAxis = g => g
+	  .attr("transform", `translate(${margin.left},0)`)
+	  .call(d3.axisLeft(y)
+	  	.tickFormat((d) => selectedRoute.header.stop[d].content));  
 
-  const line = d3.line()
-  .x(d => x(d.date))
-  .y((d,i) => y(i) + y.bandwidth()/2);
+	  const line = d3.line()
+	  .x(d => x(d.date))
+	  .y((d,i) => y(i) + y.bandwidth()/2);
 
-  svg.append("g")
-  .call(xAxis);
+	  svg.append("g")
+	  .call(xAxis);
 
-  svg.append("g")
-  .call(yAxis);
-  
-  svg.selectAll(".routes")
-  .data(buses)
-  .enter()
-  .append("path")
-  .attr("fill", "none")
-  .attr("stroke", "steelblue")
-  .attr("stroke-width", 2)
-  .attr("stroke-linejoin", "round")
-  .attr("stroke-linecap", "round")
-  .attr("d", line);
-  return svg.node(); 
-}
+	  svg.append("g")
+	  .call(yAxis);
+	  
+	  svg.selectAll(".routes")
+	  .data(buses)
+	  .enter()
+	  .append("path")
+	  .attr("fill", "none")
+	  .attr("stroke", "steelblue")
+	  .attr("stroke-width", 2)
+	  .attr("stroke-linejoin", "round")
+	  .attr("stroke-linecap", "round")
+	  .attr("d", line);
+	  return svg.node(); 
+	}
 
-filtrarBusesPorTiempo(){
-	
-}
+	handleAgencyChange(event){
+		this.fetchRutasParaAgencia(event.target.value);
+	}
 
-render() {
-	return (
-		<div>
-			<h1>Nextbus in d3!</h1>
-			<div>
-				<h2>Aquí se desplegará la información: </h2>
-				{this.renderBuses()}
+	handleRouteChange(event){
+		this.setState({
+			route:event.target.value
+		});
+	}
+
+	handleSubmit(event){
+		// alert("agencia "+this.state.agency+" ruta: "+this.state.route);
+		const svg = d3.select("#svg");
+		svg.selectAll("*").remove();
+		this.fetchBuses(this.state.agency, this.state.route);
+		event.preventDefault();
+	}
+
+	handleKeyPress(e) {
+    if (e.key === 'Enter') {
+      console.log("timetable.insertComment",this.state.agency, this.state.route, e.target.value);
+      Meteor.call("timetable.insertComment",this.state.agency, this.state.route, e.target.value);
+    }
+  }
+
+	getAgenciasTags(){
+		return this.props.agencias.map((agencia)=>{
+			return <option value={agencia.tag}>{agencia.title}</option>;
+		});
+	}
+
+	fetchRutasParaAgencia(agency){
+		Meteor.call("agencia.rutas",agency,(err,res)=>{
+			if(err) {
+				alert(err);
+				return;
+			}
+			let rutas = res.route;
+			//Agregamos a Mongo el listado de rutas
+			Meteor.call("agencia.insertarRutas",agency,rutas);
+			this.setState({
+				agency:agency,
+				listRoutes:rutas,
+				route:rutas[0].tag
+			});
+			
+		});
+	}
+
+	getRutasParaAgencia(){
+		return (this.state.listRoutes.map((r)=>{
+				return <option value={r.tag}>{r.title}</option>;
+			}));
+	}
+
+	renderFormulario(){
+		return (<div>
+			<form onSubmit={this.handleSubmit}>
+	      <label>
+	        Agencia:
+	        <select type="text" value={this.state.agency} onChange={this.handleAgencyChange}>
+	        {this.getAgenciasTags()}
+	        </select>
+	      </label>
+	      <label>
+	        Ruta:
+	        <select type="text" value={this.state.route} onChange={this.handleRouteChange}>
+	        {this.getRutasParaAgencia(this.state.agency)}
+	        </select>
+	      </label>
+	      <button type="submit" value="Grafica!">Grafica!</button>
+	    </form>
+    </div>);
+	}
+
+	renderComments(){
+		let msg = <div className="text-center"><h4>Añade tu comentario: </h4><input type="text" onKeyPress={this.handleKeyPress} /></div>
+		if(this.props.agencias.length<=0) return msg;
+		let agencia = this.props.agencias.find(a=>a.tag===this.state.agency);
+		if(!agencia.routes) return msg;
+		let ruta = agencia.routes.find(r=>r.tag===this.state.route);
+		return(
+			<div className="container">
+			<div className="row">{msg}</div>
+				<h4>Comentarios para la ruta de esta agencia</h4>
+					<div className="row">
+					{
+						ruta.comments.map((c)=>{
+							console.log("comentario",c);
+							return (<Comentario creador={c.creador} opinion={c.opinion}/>);
+						})						
+					}
+					</div>
 			</div>
-			<svg 
-			id ="svg"
-			width="1280" 
-			height="500" 
-			// ref = {(svg)=>this.svg=svg}
-			ref = {this.svg}
-			></svg>
-			<TimeButton time=""/>
-			<TimeButton time=""/>
-			<TimeButton time=""/>
-			<TimeButton time=""/>
-		</div>
 		);
+	}
+
+	render() {
+		return (
+			<div>
+				<AccountsUIWrapper />
+				<h1>horarios de buses por ruta y agencia</h1>
+				{this.renderFormulario()}
+				<div>
+					<h3>Al hacer click, se grafican horarios de buses para agencia "{this.state.agency}" y ruta con tag "{this.state.route}" </h3>
+					{this.renderBuses()}
+				</div>
+				<svg 
+				id ="svg"
+				width="1280" 
+				height="500" 
+				// ref = {(svg)=>this.svg=svg}
+				ref = {this.svg}
+				></svg>
+				{this.renderComments()}
+			</div>
+			);
+	}
 }
-}
+
+export default withTracker(() => {
+  
+  Meteor.subscribe("agencias");
+
+  return {
+    agencias: Timetables.find({}, {sort: {createdAt: -1}}).fetch(),
+    currentUser: Meteor.user()
+  };
+})(App);
