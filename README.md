@@ -35,5 +35,5 @@ meteor
 
 ## Autor
 
-Realizado por Fabio López. Universidad de los Andes 2018.
+Realizado por [Fabio López](https://falopez10.github.io). Universidad de los Andes 2018.
 
