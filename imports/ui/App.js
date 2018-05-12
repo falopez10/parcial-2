@@ -19,7 +19,8 @@ class App extends Component {
 			selectedRoute:{},
 			agency:"sf-muni",
 			route:"N",
-			listRoutes:[]
+			listRoutes:[],
+			horario:"todos"
 		}
 
 
@@ -27,6 +28,7 @@ class App extends Component {
 		this.handleAgencyChange = this.handleAgencyChange.bind(this);
 		this.handleRouteChange = this.handleRouteChange.bind(this);
 		this.handleKeyPress = this.handleKeyPress.bind(this);
+		this.handleHorarioButton = this.handleHorarioButton.bind(this);
 	}
 
 	componentDidMount() {
@@ -77,8 +79,15 @@ class App extends Component {
 		const height = svg.attr("height") - margin.top - margin.bottom;
 		const width = svg.attr("width") - margin.left - margin.right;
 
-		const minDate = d3.min(buses[1], d => d.date);
-	  const maxDate = new Date(minDate.getTime() + 22*60*60*1000); // minDate + 24 hours
+		// Todos
+		let minDate = d3.min(buses[1], d => d.date);
+	  let maxDate = new Date(minDate.getTime() + 24*60*60*1000); // minDate + 24 hours
+		if(this.state.horario==="manana")
+			maxDate = new Date(minDate.getTime() + 12*60*60*1000); // minDate + 12 hours
+		if(this.state.horario==="tarde"){
+			minDate = new Date(maxDate.getTime() - 12*60*60*1000);
+		}
+
 
 	  const x = d3.scaleTime()
 	  .domain([ minDate, maxDate ])
@@ -130,7 +139,7 @@ class App extends Component {
 	}
 
 	handleSubmit(event){
-		// alert("agencia "+this.state.agency+" ruta: "+this.state.route);
+		alert("event "+event.target.value);
 		const svg = d3.select("#svg");
 		svg.selectAll("*").remove();
 		this.fetchBuses(this.state.agency, this.state.route);
@@ -140,7 +149,10 @@ class App extends Component {
 	handleKeyPress(e) {
     if (e.key === 'Enter') {
       console.log("timetable.insertComment",this.state.agency, this.state.route, e.target.value);
-      Meteor.call("timetable.insertComment",this.state.agency, this.state.route, e.target.value);
+      if(!this.props.currentUser)
+      	alert("por favor ingrese");
+      else
+      	Meteor.call("timetable.insertComment",this.state.agency, this.state.route, e.target.value);
     }
   }
 
@@ -175,23 +187,24 @@ class App extends Component {
 	}
 
 	renderFormulario(){
-		return (<div>
-			<form onSubmit={this.handleSubmit}>
-	      <label>
+		return (<center>
+			<form className="row" onSubmit={this.handleSubmit}>
+	      <label className="col">
 	        Agencia:
-	        <select type="text" value={this.state.agency} onChange={this.handleAgencyChange}>
+	        <br/><select type="text" value={this.state.agency} onChange={this.handleAgencyChange}>
 	        {this.getAgenciasTags()}
 	        </select>
 	      </label>
-	      <label>
+	      <span className="col-3"/>
+	      <label className="col">
 	        Ruta:
-	        <select type="text" value={this.state.route} onChange={this.handleRouteChange}>
+	        <br/><select type="text" value={this.state.route} onChange={this.handleRouteChange}>
 	        {this.getRutasParaAgencia(this.state.agency)}
 	        </select>
 	      </label>
-	      <button type="submit" value="Grafica!">Grafica!</button>
+	      <button className="col" type="submit" value="Grafica!">Grafica!</button>
 	    </form>
-    </div>);
+    </center>);
 	}
 
 	renderComments(){
@@ -216,6 +229,12 @@ class App extends Component {
 		);
 	}
 
+	handleHorarioButton(event){
+		this.setState({
+			horario:event.target.value
+		});
+	}
+
 	render() {
 		return (
 			<div>
@@ -224,6 +243,14 @@ class App extends Component {
 				{this.renderFormulario()}
 				<div>
 					<h3>Al hacer click, se grafican horarios de buses para agencia "{this.state.agency}" y ruta con tag "{this.state.route}" </h3>
+					<h4>Tambien puedes escoger tu horario preferido</h4>
+					<center>
+						<button value="manana" onClick={this.handleHorarioButton}>Mañana</button>
+						<span>				</span>
+						<button value="tarde" onClick={this.handleHorarioButton}>Tarde</button>
+						<span>				</span>
+						<button value="todos" onClick={this.handleHorarioButton}>Todos</button>
+					</center>
 					{this.renderBuses()}
 				</div>
 				<svg 

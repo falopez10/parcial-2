@@ -1,19 +1,17 @@
-@import url(https://fonts.googleapis.com/css?family=Anonymous+Pro);
 /* CSS declarations go here */
-body  {
-    /*background-image: url("fondo.jpg");*/
-    }
 h1, h4, h5, p, input {
 	
 	text-align: center;
 }
 #login-buttons, .login-button, button {
  border: none;
- background: #3a7999;
- color: #ffffff;
+ background: #dedede;
+ color: white;
+ text-decoration-color: #eeeeee;
  padding: 10px;
  font-size: 18px;
  border-radius: 5px;
+ border-bottom-color: #eeeeee;
  position: relative;
  box-sizing: border-box;
  transition: all 500ms ease;
@@ -37,18 +35,7 @@ button:hover {
 
 }
 
-.line-1{
-    position: relative;
-    top: 50%;  
-    width: 24em;
-    margin: 0 auto;
-    border-right: 2px solid rgba(255,255,255,.75);
-    font-size: 180%;
-    text-align: center;
-    white-space: nowrap;
-    overflow: hidden;
-    transform: translateY(-50%);    
-}
+
 
 /* Animation */
 .anim-typewriter{
@@ -67,8 +54,12 @@ button:hover {
 /*Customize sign in*/
 
  .login-link-text{
- 	color: #ffffff;
+ 	color: #232323;
 	position: relative;
+}
+
+path:hover{
+	stroke-width:5; 
 }
 
 /*
